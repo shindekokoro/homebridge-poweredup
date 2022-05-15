@@ -6,7 +6,7 @@
 
 # homebridge-poweredup
 
-[![npm](https://img.shields.io/npm/v/homebridge-web-fan.svg)](https://www.npmjs.com/package/homebridge-web-fan) [![npm](https://img.shields.io/npm/dt/homebridge-web-fan.svg)](https://www.npmjs.com/package/homebridge-web-fan)
+[![npm](https://img.shields.io/npm/v/homebridge-poweredup.svg)](https://www.npmjs.com/package/homebridge-poweredup) [![npm](https://img.shields.io/npm/dt/homebridge-poweredup.svg)](https://www.npmjs.com/package/homebridge-poweredup)
 
 </span>
 

@@ -1,6 +1,6 @@
 {
   "name": "homebridge-poweredup",
-  "version": "1.0",
+  "version": "1.0.1",
   "description": "Homebridge Plugin to control LEGO PoweredUp hub devices",
   "license": "MIT License",
   "keywords": [
