@@ -1,0 +1,18 @@
+{
+  "name": "homebridge-poweredup",
+  "version": "1.0",
+  "description": "Homebridge Plugin to control LEGO PoweredUp hub devices",
+  "license": "MIT License",
+  "keywords": [
+    "homebridge-plugin",
+    "lego",
+    "poweredup hub"
+  ],
+  "engines": {
+    "node": ">=16.14.0",
+    "homebridge": ">=1.4.1"
+  },
+  "dependencies": {
+    "node-poweredup": "^8.0.5"
+  }
+}
