@@ -38,7 +38,7 @@ TrainMotorAccessory.prototype = {
   },
   getServices: function() {
     poweredUP.scan(); // Start scanning
-    this.getHub()
+    this.getTrainHub()
 
     this.fanService = new Service.Fan();
     this.fanService
@@ -87,7 +87,7 @@ TrainMotorAccessory.prototype = {
     return [infoService, this.fanService, this.lightService];
 
   },
-  getHub: function() {
+  getTrainHub: function() {
     poweredUP.on("discover", async (hub) => { // Wait to discover hubs
 
         hub.on("attach", (device) => {

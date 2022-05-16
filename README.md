@@ -14,6 +14,10 @@
 
 This [homebridge](https://github.com/homebridge/homebridge) plugin for exposing services and characteristics of nearby [LEGO PoweredUP HUBs](https://www.lego.com/en-us/themes/powered-up/about) as HomeKit accessories. Ideal for wireless DIY home automation projects if you'd like to control them comfortably with Siri on any Apple device.
 
+## Notes
+
+This plugin has been tested using on a RaspberryPi 4 with a PoweredUP HUB and basic Train Motor.
+
 ## Installation
 
 1. Install [homebridge](https://github.com/homebridge/homebridge#installation)
@@ -38,3 +42,7 @@ This [homebridge](https://github.com/homebridge/homebridge) plugin for exposing 
 * "accessory": is the name of the plugin and is required as is.
 * "name": is the default name the hub will show up as in HomeKit.
 * "uuid": is required and can be found after attempting to start the hub and looking at the logs.
+
+## TO-DO
+
+Potentially add support for other HUBs, Motors and accessories to do various routines outside of a LEGO PoweredUP Train. The libraries are mostly there thanks to the awesome work done at [node-poweredup](https://github.com/nathankellenicki/node-poweredup). I have a Boost Move Hub to do some additional testing.
