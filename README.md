@@ -34,6 +34,7 @@ This plugin has been tested using on a RaspberryPi 4 with a PoweredUP HUB and ba
       "accessory": "PoweredUp trainMotor",
       "name": "Train",
       "uuid": "10242b090aaa",
+      "motorPort": "B",
       "hubType": "HUB NO.4",
       "deviceType": "TRAIN_MOTOR"
    }
@@ -42,6 +43,9 @@ This plugin has been tested using on a RaspberryPi 4 with a PoweredUP HUB and ba
 * "accessory": is the name of the plugin and is required as is.
 * "name": is the default name the hub will show up as in HomeKit.
 * "uuid": is required and can be found after attempting to start the hub and looking at the logs.
+* "motorPort": is optional and will allow for your to put the motor on a different port. If not set defaulted to port A.
+* "hubType": can be anything in the config, only used for HomeKit settings currently.
+* "deviceType": can be anything in the config, only used for HomeKit settings currently.
 
 ## TO-DO
 

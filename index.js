@@ -1,6 +1,15 @@
 const LEGO = require("node-poweredup");
 const poweredUP = new LEGO.PoweredUP();
 let Service, Characteristic;
+let freshCache = {
+  "lightOn": 0,
+  //"light-brightness": 100,
+  "lightHue": 0,
+  "lightSaturation": 0,
+  "trainOn": 0,
+  "trainSpeed": 0,
+  "trainDirection": 0
+};
 
 module.exports = function(homebridge) {
   Service = homebridge.hap.Service;
@@ -17,15 +26,8 @@ function TrainMotorAccessory(log, config, api) {
   this.homebridge = api;
   this.speeds = 5;
 
-  this.stateCache = {
-    "lightOn": 1,
-    //"light-brightness": 100,
-    "lightHue": 0,
-    "lightSaturation": 0,
-    "trainOn": 0,
-    "trainSpeed": 0,
-    "trainDirection": 0
-  };
+  // Create a cache for accessory setting all to off.
+  this.stateCache = freshCache;
   this.lastCacheRefresh = 0;
 }
 
@@ -37,8 +39,8 @@ TrainMotorAccessory.prototype = {
     callback();
   },
   getServices: function() {
-    poweredUP.scan(); // Start scanning
-    this.getTrainHub()
+    poweredUP.scan(); // Start scanning for hubs
+    this.getTrainHub();
 
     this.fanService = new Service.Fan();
     this.fanService
@@ -98,25 +100,35 @@ TrainMotorAccessory.prototype = {
         this.log(`Connected to ${hub.name} ${hub.uuid}`);
         if(this.config.uuid != hub.uuid){
           this.log('Hub does not match that in config, turning it off. Update config if that\'s not correct');
+          this.log(`Copy the UUID for config "uuid": "${hub.uuid}"`);
           hub.shutdown();
         } else{
-          this.trainMotor = await hub.waitForDeviceAtPort("A");
+          // Set defaultPort unless one set in settings
+          let defaultPort = hub.name == 'Move Hub' ? "AB" : "A";
+          let motorPort = this.config.motorPort ? this.config.motorPort : defaultPort;
+          this.trainMotor = await hub.waitForDeviceAtPort(motorPort);
           this.log(`Connected to ${this.trainMotor.typeName}.`);
 
           this.HUB_LED = await hub.waitForDeviceAtPort("HUB_LED");
           this.log(`Connected to ${this.HUB_LED.typeName}.`);
+          this.stateCache["lightOn"] = 1;
         }
 
-        // hub.on("disconnect", () => {
-        //     this.log(`Disconnected ${hub.name}`);
-        // })
+        hub.on("disconnect", () => {
+            this.log(`Disconnected ${hub.name}`);
+
+            // Clear stateCache and make sure motor and LED variables reset.
+            this.stateCache = freshCache;
+            this.trainMotor = null;
+            this.HUB_LED = null;
+        })
 
         hub.on("button", ({ event }) => {
             this.log.debug(`Green button press detected (Event: ${event})`);
             switch (event) {
               case 2:
+                this.log(`Turning off ${hub.name}.`);
                 hub.shutdown();
-                this.log(`Turning off ${hub.name}.`)
                 break;
               default: hub.connect();
             }
@@ -126,42 +138,50 @@ TrainMotorAccessory.prototype = {
   },
 
   getTrainChar: function(mode, callback) {
+    if(!this.trainMotor){
+      this.stateCache["trainOn"] = 0; // Tell HomeKit the 'fan' is off
+    }
     this.stateCache[mode] = this.stateCache[mode];
     callback(null, this.stateCache[mode]);
   },
   setTrainChar: function(mode, value, callback) {
     if(!this.trainMotor){
-      this.log("Motor not connected yet, is the HUB powered...UP?");
-      return;
-    }
-    this.stateCache[mode] = value;
-    var trainSpeed = this.stateCache["trainDirection"] ? this.stateCache["trainSpeed"] * -1 : this.stateCache["trainSpeed"];
-    this.log.debug(`${this.trainMotor.typeName} ${mode} ${value}`);
+      this.log.debug("Motor not connected yet, is the HUB powered...UP?");
+      this.stateCache["trainOn"] = 0; // Tell HomeKit the 'fan' is off
+    } else{
+      this.stateCache[mode] = value;
+      var trainSpeed = this.stateCache["trainDirection"] ? this.stateCache["trainSpeed"] * -1 : this.stateCache["trainSpeed"];
+      this.log.debug(`${this.trainMotor.typeName} ${mode} ${value}`);
 
-    if (mode == "trainOn" && !this.stateCache["trainOn"]){
-      this.trainMotor.stop();
-    } else {
-      this.trainMotor.setPower(trainSpeed);
+      if (mode == "trainOn" && !this.stateCache["trainOn"]){
+        this.trainMotor.stop();
+      } else {
+        this.trainMotor.setPower(trainSpeed);
+      }
     }
     callback()
   },
   getDeviceChar: function(mode, callback) {
+    if(!this.HUB_LED){
+      this.stateCache["lightOn"] = 0; // Tell HomeKit the light is off
+    }
     this.stateCache[mode] = this.stateCache[mode];
     callback(null, this.stateCache[mode]);
   },
   setDeviceChar: function(mode, value, callback) {
     if(!this.HUB_LED){
-      this.log("LED not connected yet, is the HUB powered...UP?");
-      return;
-    }
-    this.stateCache[mode] = value;
-    this.log.debug(`${this.HUB_LED.typeName} ${mode} ${value}`);
+      this.log.debug("LED not connected yet, is the HUB powered...UP?");
+      this.stateCache["lightOn"] = 0; // Tell HomeKit the light is off
+    } else{
+      this.stateCache[mode] = value;
+      this.log.debug(`${this.HUB_LED.typeName} ${mode} ${value}`);
 
-    var lightValue = this.stateCache["lightOn"] ? 255 : 0;
-    var color = HSVtoRGB(this.stateCache["lightHue"]/360,
-                         this.stateCache["lightSaturation"]/100,
-                         lightValue);
-    this.HUB_LED.setRGB(color.r, color.g, color.b);
+      var lightValue = this.stateCache["lightOn"] ? 255 : 0;
+      var color = HSVtoRGB(this.stateCache["lightHue"]/360,
+                           this.stateCache["lightSaturation"]/100,
+                           lightValue);
+      this.HUB_LED.setRGB(color.r, color.g, color.b);
+    }
 
     callback();
   },
