@@ -104,7 +104,7 @@ TrainMotorAccessory.prototype = {
           hub.shutdown();
         } else{
           // Set defaultPort unless one set in settings
-          let defaultPort = hub.name == 'Move Hub' ? "AB" : "A";
+          let defaultPort = getDefaultPort(hub.name);
           let motorPort = this.config.motorPort ? this.config.motorPort : defaultPort;
           this.trainMotor = await hub.waitForDeviceAtPort(motorPort);
           this.log(`Connected to ${this.trainMotor.typeName}.`);
@@ -251,4 +251,12 @@ function HSVtoRGB(h, s, v) {
         case 5: r = v, g = p, b = q; break;
     }
     return {r: r, g: g, b: b};
+}
+
+function getDefaultPort(hubName){
+  switch (hubName) {
+    case 'Move Hub': return 'AB';
+    case 'Train Base\x00        ': return 'MOTOR';
+    default: return 'A';
+  }
 }
