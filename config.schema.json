@@ -1,0 +1,43 @@
+{
+  "pluginAlias": "PoweredUp trainMotor",
+  "pluginType": "accessory",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "required": true,
+        "default": "LEGO HUB"
+      },
+      "uuid": {
+        "title": "UUID",
+        "type": "string",
+        "required": true,
+        "default": "10242b090aaa",
+        "description": "If UUID is unknown, leave as default and attempt to connect hub to get output in logs."
+      },
+      "hubType": {
+        "title": "Hub Type",
+        "type": "string",
+        "required": true,
+        "default": "Basic HUB",
+        "description": "Type of HUB this is only reported to HomeKit for setup"
+      },
+      "deviceType": {
+        "title": "Device Type",
+        "type": "string",
+        "required": true,
+        "default": "Train Motor",
+        "description": "Type of device(motor) attached to the hub, only reported to HomeKit for setup"
+      },
+      "motorPort": {
+        "title": "Motor Port",
+        "type": "string",
+        "required": false,
+        "default": "",
+        "description": "The port the motor(device) is on. (i.e. A, B) Leave blank for DUPLO HUB, or Move HUB unless specefic reason known."
+      }
+    }
+  }
+}
