@@ -31,7 +31,7 @@ This plugin has been tested using on a RaspberryPi 4 with a PoweredUP HUB and ba
 ```json
 "accessories": [
    {
-      "accessory": "PoweredUp trainMotor",
+      "accessory": "PoweredUp hubMotor",
       "name": "Train",
       "uuid": "10242b090aaa",
       "motorPort": "B",

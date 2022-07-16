@@ -6,21 +6,21 @@ let freshCache = {
   //"light-brightness": 100,
   "lightHue": 0,
   "lightSaturation": 0,
-  "trainOn": 0,
-  "trainSpeed": 0,
-  "trainDirection": 0
+  "motorOn": 0,
+  "motorSpeed": 0,
+  "motorDirection": 0
 };
 
 module.exports = function(homebridge) {
   Service = homebridge.hap.Service;
   Characteristic = homebridge.hap.Characteristic;
   homebridge.registerAccessory("homebridge-poweredup",
-  "PoweredUp trainMotor", TrainMotorAccessory);
+  "PoweredUp hubMotor", HubMotorAccessory);
 };
 
 // PoweredUp HUB with Basic TrainMotor and
 // optional light accessory. "Functions as FAN"
-function TrainMotorAccessory(log, config, api) {
+function HubMotorAccessory(log, config, api) {
   this.log = log;
   this.config = config;
   this.homebridge = api;
@@ -32,7 +32,7 @@ function TrainMotorAccessory(log, config, api) {
 }
 
 
-TrainMotorAccessory.prototype = {
+HubMotorAccessory.prototype = {
   // This will flash an LED on PoweredUp HUB to verify
   identify: function(callback) {
     this.log("Identify requested!");
@@ -40,13 +40,13 @@ TrainMotorAccessory.prototype = {
   },
   getServices: function() {
     poweredUP.scan(); // Start scanning for hubs
-    this.getTrainHub();
+    this.getHub();
 
     this.fanService = new Service.Fan();
     this.fanService
       .getCharacteristic(Characteristic.On)
-      .on("get", this.getTrainOn.bind(this))
-      .on("set", this.setTrainOn.bind(this));
+      .on("get", this.getMotorOn.bind(this))
+      .on("set", this.setMotorOn.bind(this));
     this.fanService
       .getCharacteristic(Characteristic.RotationSpeed)
       .setProps({
@@ -54,12 +54,12 @@ TrainMotorAccessory.prototype = {
         maxValue: 100,
         minStep: Math.floor(100 / this.speeds)
       })
-      .on("get", this.getTrainSpeed.bind(this))
-      .on("set", this.setTrainSpeed.bind(this));
+      .on("get", this.getMotorSpeed.bind(this))
+      .on("set", this.setMotorSpeed.bind(this));
     this.fanService
       .getCharacteristic(Characteristic.RotationDirection)
-      .on("get", this.getTrainDirection.bind(this))
-      .on("set", this.setTrainDirection.bind(this));
+      .on("get", this.getMotorDirection.bind(this))
+      .on("set", this.setMotorDirection.bind(this));
 
     // Light
     this.lightService = new Service.Lightbulb(this.light_name);
@@ -89,7 +89,7 @@ TrainMotorAccessory.prototype = {
     return [infoService, this.fanService, this.lightService];
 
   },
-  getTrainHub: function() {
+  getHub: function() {
     poweredUP.on("discover", async (hub) => { // Wait to discover hubs
 
         hub.on("attach", (device) => {
@@ -106,8 +106,8 @@ TrainMotorAccessory.prototype = {
           // Set defaultPort unless one set in settings
           let defaultPort = getDefaultPort(hub.name);
           let motorPort = this.config.motorPort ? this.config.motorPort : defaultPort;
-          this.trainMotor = await hub.waitForDeviceAtPort(motorPort);
-          this.log(`Connected to ${this.trainMotor.typeName}.`);
+          this.hubMotor = await hub.waitForDeviceAtPort(motorPort);
+          this.log(`Connected to ${this.hubMotor.typeName}.`);
 
           this.HUB_LED = await hub.waitForDeviceAtPort("HUB_LED");
           this.log(`Connected to ${this.HUB_LED.typeName}.`);
@@ -119,7 +119,7 @@ TrainMotorAccessory.prototype = {
 
             // Clear stateCache and make sure motor and LED variables reset.
             this.stateCache = freshCache;
-            this.trainMotor = null;
+            this.hubMotor = null;
             this.HUB_LED = null;
         })
 
@@ -137,38 +137,38 @@ TrainMotorAccessory.prototype = {
     });
   },
 
-  getTrainChar: function(mode, callback) {
-    if(!this.trainMotor){
-      this.stateCache["trainOn"] = 0; // Tell HomeKit the 'fan' is off
+  getMotorCharacteristics: function(mode, callback) {
+    if(!this.hubMotor){
+      this.stateCache["motorOn"] = 0; // Tell HomeKit the 'fan' is off
     }
     this.stateCache[mode] = this.stateCache[mode];
     callback(null, this.stateCache[mode]);
   },
-  setTrainChar: function(mode, value, callback) {
-    if(!this.trainMotor){
+  setMotorCharacteristics: function(mode, value, callback) {
+    if(!this.hubMotor){
       this.log.debug("Motor not connected yet, is the HUB powered...UP?");
-      this.stateCache["trainOn"] = 0; // Tell HomeKit the 'fan' is off
+      this.stateCache["motorOn"] = 0; // Tell HomeKit the 'fan' is off
     } else{
       this.stateCache[mode] = value;
-      var trainSpeed = this.stateCache["trainDirection"] ? this.stateCache["trainSpeed"] * -1 : this.stateCache["trainSpeed"];
-      this.log.debug(`${this.trainMotor.typeName} ${mode} ${value}`);
+      var motorSpeed = this.stateCache["motorDirection"] ? this.stateCache["motorSpeed"] * -1 : this.stateCache["motorSpeed"];
+      this.log.debug(`${this.hubMotor.typeName} ${mode} ${value}`);
 
-      if (mode == "trainOn" && !this.stateCache["trainOn"]){
-        this.trainMotor.stop();
+      if (mode == "motorOn" && !this.stateCache["motorOn"]){
+        this.hubMotor.stop();
       } else {
-        this.trainMotor.setPower(trainSpeed);
+        this.hubMotor.setPower(motorSpeed);
       }
     }
     callback()
   },
-  getDeviceChar: function(mode, callback) {
+  getDeviceCharacteristics: function(mode, callback) {
     if(!this.HUB_LED){
       this.stateCache["lightOn"] = 0; // Tell HomeKit the light is off
     }
     this.stateCache[mode] = this.stateCache[mode];
     callback(null, this.stateCache[mode]);
   },
-  setDeviceChar: function(mode, value, callback) {
+  setDeviceCharacteristics: function(mode, value, callback) {
     if(!this.HUB_LED){
       this.log.debug("LED not connected yet, is the HUB powered...UP?");
       this.stateCache["lightOn"] = 0; // Tell HomeKit the light is off
@@ -187,48 +187,48 @@ TrainMotorAccessory.prototype = {
   },
 
   // Train(i.e.Fan) Functions
-  getTrainOn: function(callback) {
-    this.getTrainChar("trainOn", callback);
+  getMotorOn: function(callback) {
+    this.getMotorCharacteristics("motorOn", callback);
   },
-  setTrainOn: function(value, callback) {
-    this.setTrainChar("trainOn", value, callback);
+  setMotorOn: function(value, callback) {
+    this.setMotorCharacteristics("motorOn", value, callback);
   },
-  getTrainSpeed: function(callback) {
-    this.getTrainChar("trainSpeed", callback);
+  getMotorSpeed: function(callback) {
+    this.getMotorCharacteristics("motorSpeed", callback);
   },
-  setTrainSpeed: function(value, callback) {
-    this.setTrainChar("trainSpeed", value, callback);
+  setMotorSpeed: function(value, callback) {
+    this.setMotorCharacteristics("motorSpeed", value, callback);
   },
-  getTrainDirection: function(callback) {
-    this.getTrainChar("trainDirection", callback);
+  getMotorDirection: function(callback) {
+    this.getMotorCharacteristics("motorDirection", callback);
   },
-  setTrainDirection: function(value, callback) {
-    this.setTrainChar("trainDirection", value, callback);
+  setMotorDirection: function(value, callback) {
+    this.setMotorCharacteristics("motorDirection", value, callback);
   },
   // Lighting Functions
   getLightOn: function(callback) {
-    this.getDeviceChar("lightOn", callback);
+    this.getDeviceCharacteristics("lightOn", callback);
   },
   setLightOn: function(value, callback) {
-    this.setDeviceChar("lightOn", value, callback);
+    this.setDeviceCharacteristics("lightOn", value, callback);
   },
   // getLightBrightness: function(callback) {
-  //   this.getDeviceChar("light-brightness", callback);
+  //   this.getDeviceCharacteristics("light-brightness", callback);
   // },
   // setLightBrightness: function(value, callback) {
-  //   this.setDeviceChar("light-brightness", value, callback);
+  //   this.setDeviceCharacteristics("light-brightness", value, callback);
   // },
   getLightHue: function(callback) {
-    this.getDeviceChar("lightHue", callback);
+    this.getDeviceCharacteristics("lightHue", callback);
   },
   setLightHue: function(value, callback) {
-    this.setDeviceChar("lightHue", value, callback);
+    this.setDeviceCharacteristics("lightHue", value, callback);
   },
   getLightSaturation: function(callback) {
-    this.getDeviceChar("lightSaturation", callback);
+    this.getDeviceCharacteristics("lightSaturation", callback);
   },
   setLightSaturation: function(value, callback) {
-    this.setDeviceChar("lightSaturation", value, callback);
+    this.setDeviceCharacteristics("lightSaturation", value, callback);
   }
 }
 

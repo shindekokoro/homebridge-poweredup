@@ -1,5 +1,5 @@
 {
-  "pluginAlias": "PoweredUp trainMotor",
+  "pluginAlias": "PoweredUp hubMotor",
   "pluginType": "accessory",
   "schema": {
     "type": "object",
